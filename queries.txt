@@ -1,0 +1,81 @@
+/*query 1*/
+SELECT a.name,
+       COUNT(t.TrackId) AS songs
+FROM Artist AS a
+JOIN Album AS al ON a.ArtistId = al.ArtistId
+JOIN Track AS t ON al.AlbumId = t.AlbumId
+JOIN Genre AS g ON t.genreid = g.GenreId
+WHERE g.Name = 'Rock'
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10;
+
+
+
+
+/*query 2*/
+SELECT round(SUM(il.Quantity*il.UnitPrice),2) AS AmountSpent,
+       c.FirstName ||' '|| c.LastName AS CustomerName
+FROM Artist a
+JOIN Album al ON a.ArtistId = al.ArtistId
+JOIN Track t ON t.AlbumId = al.AlbumId
+JOIN InvoiceLine il ON t.TrackId = il.Trackid
+JOIN Invoice i ON il.InvoiceId = i.InvoiceId
+JOIN Customer c ON c.CustomerId = i.CustomerId
+WHERE a.Name = 'Iron Maiden'
+GROUP BY c.CustomerId
+ORDER BY AmountSpent DESC;
+
+
+
+
+/*query 3*/
+WITH t1 AS
+  (SELECT COUNT(i.invoiceid) AS purchases,
+          c.country,
+          g.name,
+          g.genreid
+   FROM Genre g
+   JOIN Track t ON g.GenreId = t.GenreId
+   JOIN InvoiceLine il ON t.trackid = il.TrackId
+   JOIN Invoice i ON il.InvoiceId = i.InvoiceId
+   JOIN Customer c ON i.customerid = c.CustomerId
+   GROUP BY 2,
+            3
+   ORDER BY 2,
+            1 DESC)
+SELECT t1.*
+FROM t1
+JOIN
+  (SELECT Country,
+          Name,
+          GenreId,
+          max(purchases) AS mp
+   FROM t1
+   GROUP BY country) t2 ON t1.country = t2.country
+WHERE t1.purchases = t2.mp
+
+
+
+
+
+/*query 4 */
+WITH t1 AS
+  (SELECT c.country,
+          sum(i.total) AS TotalSpent,
+          c.FirstName,
+          c.LastName,
+          c.CustomerId
+   FROM Invoice i
+   JOIN Customer c ON i.customerid = c.customerid
+   GROUP BY 5
+   ORDER BY 1)
+SELECT t1.*
+FROM t1
+JOIN
+  (SELECT max(TotalSpent) AS mts,
+          country
+   FROM t1
+   GROUP BY country) t2 ON t1.country = t2.country
+WHERE t1.TotalSpent = t2.mts
+
